@@ -84,7 +84,15 @@ extern "C" fn main() -> ! {
 
 fn run_module(wasm: &[u8]) -> tinywasm::Result<()> {
     let module = tinywasm::Module::parse_bytes(wasm)?;
-    let mut store = tinywasm::Store::default();
+    // We're gonna try to trim down the interpreter to a really minimal subset
+    let mut store = tinywasm::Store::with_config(tinywasm::StackConfig {
+        value_stack_32_init_size: None,
+        value_stack_64_init_size: Some(0),
+        value_stack_128_init_size: Some(0),
+        value_stack_ref_init_size: None,
+        block_stack_init_size: None,
+    });
+    // let mut store = tinywasm::Store::default();
     let imports = host::register_imports();
 
     let instance = module.instantiate(&mut store, Some(imports))?;

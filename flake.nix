@@ -32,6 +32,9 @@
           packages = with pkgs; [
             rust-toolchain
             llvm
+            just
+            qemu
+            wasm-tools
           ];
         };
       }

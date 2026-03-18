@@ -2,6 +2,15 @@
 /// Safe because we're single-hart with no interrupts using atomics.
 
 #[unsafe(no_mangle)]
+pub unsafe extern "C" fn __sync_fetch_and_and_1(ptr: *mut u8, val: u8) -> u8 {
+    unsafe {
+        let old = ptr.read_volatile();
+        ptr.write_volatile(old & val);
+        old
+    }
+}
+
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn __sync_fetch_and_or_1(ptr: *mut u8, val: u8) -> u8 {
     unsafe {
         let old = ptr.read_volatile();

@@ -21,11 +21,16 @@ pub const DEFAULT_BLOCK_STACK_INIT_SIZE: usize = 128;
 /// different parts of the stack that the interpreter uses to store values.
 #[derive(Debug, Clone)]
 pub struct StackConfig {
-    value_stack_32_init_size: Option<usize>,
-    value_stack_64_init_size: Option<usize>,
-    value_stack_128_init_size: Option<usize>,
-    value_stack_ref_init_size: Option<usize>,
-    block_stack_init_size: Option<usize>,
+    /// Initial size for the 32-bit value stack (i32, f32 values).
+    pub value_stack_32_init_size: Option<usize>,
+    /// Initial size for the 64-bit value stack (i64, f64 values).
+    pub value_stack_64_init_size: Option<usize>,
+    /// Initial size for the 128-bit value stack (v128 values).
+    pub value_stack_128_init_size: Option<usize>,
+    /// Initial size for the reference value stack (funcref, externref values).
+    pub value_stack_ref_init_size: Option<usize>,
+    /// Initial size for the block stack.
+    pub block_stack_init_size: Option<usize>,
 }
 
 impl StackConfig {
