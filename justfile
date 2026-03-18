@@ -24,3 +24,7 @@ test-firmware: build-firmware build-tests
         examples/wasm/loop.wasm \
         examples/wasm/fib.wasm \
         examples/wasm/hello.wasm
+
+# Check the binary size
+check-bin-size:
+	du -h target/riscv64im-unknown-none-elf/firmware/tinywasm-firmware
