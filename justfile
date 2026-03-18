@@ -19,6 +19,10 @@ build-tests:
 test-firmware: build-firmware build-tests
     python3 scripts/run-tests.py {{FIRMWARE}} \
         examples/wasm/add.wasm \
+        examples/wasm/arith_wrap.wasm \
+        examples/wasm/arith_div_zero.wasm \
+        examples/wasm/arith_rem_zero.wasm \
+        examples/wasm/arith_overflow.wasm \
         examples/wasm/locals.wasm \
         examples/wasm/if_else.wasm \
         examples/wasm/loop.wasm \
