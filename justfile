@@ -23,6 +23,15 @@ test-firmware: build-firmware build-tests
         examples/wasm/arith_div_zero.wasm \
         examples/wasm/arith_rem_zero.wasm \
         examples/wasm/arith_overflow.wasm \
+        examples/wasm/memory_ops.wasm \
+        examples/wasm/memory_oob.wasm \
+        examples/wasm/cons_list.wasm \
+        examples/wasm/tagged_values.wasm \
+        examples/wasm/symbol_compare.wasm \
+        examples/wasm/eval_stack.wasm \
+        examples/wasm/env_frames.wasm \
+        examples/wasm/alloc_exhaustion.wasm \
+        examples/wasm/tree_eval.wasm \
         examples/wasm/locals.wasm \
         examples/wasm/if_else.wasm \
         examples/wasm/loop.wasm \
