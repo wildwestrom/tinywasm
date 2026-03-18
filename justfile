@@ -31,6 +31,7 @@ test-firmware: build-firmware build-tests
         examples/wasm/eval_stack.wasm \
         examples/wasm/env_frames.wasm \
         examples/wasm/alloc_exhaustion.wasm \
+        examples/wasm/gc_copying.wasm \
         examples/wasm/tree_eval.wasm \
         examples/wasm/locals.wasm \
         examples/wasm/if_else.wasm \
