@@ -1,0 +1,10 @@
+[build]
+target = "riscv64im-unknown-none-elf.json"
+
+[target.riscv64im-unknown-none-elf]
+rustflags = ["-C", "link-arg=-Lcrates/firmware", "-C", "link-arg=-Tlinker.ld"]
+
+[unstable]
+build-std = ["core", "alloc"]
+build-std-features = ["compiler-builtins-mem"]
+json-target-spec = true

@@ -9,3 +9,6 @@ flamegraph.svg
 /.idea
 /*.iml
 profile.json
+
+.direnv
+.envrc
