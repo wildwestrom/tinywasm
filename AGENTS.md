@@ -17,14 +17,6 @@ just build-tests       # compile examples/wasm/*.wat → .wasm via wasm-tools
 just test-firmware     # build + run smoke tests via QEMU (passes all .wasm to firmware)
 ```
 
-To run workspace-level tests (host, not firmware):
-```sh
-cargo test-wasm-1      # alias for: cargo test -p tinywasm --test test-wasm-1 --release
-cargo test-wasm-2
-cargo test-wasm-3
-cargo test-wast        # runs the WebAssembly spec test suite
-```
-
 ## Architecture
 
 ### Workspace crates
@@ -33,7 +25,6 @@ cargo test-wast        # runs the WebAssembly spec test suite
 - **`crates/types`** — shared type definitions and the custom bytecode format (instruction enums, not raw opcodes)
 - **`crates/parser`** — converts binary WASM to tinywasm's internal bytecode using `wasmparser`
 - **`crates/firmware`** — bare-metal RISC-V firmware (the main focus of this fork)
-- **`crates/cli`** — host CLI tool (not the focus here)
 
 ### Firmware internals (`crates/firmware/src/`)
 
@@ -47,18 +38,6 @@ cargo test-wast        # runs the WebAssembly spec test suite
 - Custom target: `riscv64im-unknown-none-elf.json` — RV64IM, `+forced-atomics`, `panic=abort`, static relocation
 - `linker.ld` — 128 MB RAM from `0x80000000`, 64 KB stack at top, rest is heap
 - `crates/firmware/.cargo/config.toml` — sets target, linker args (`-Tlinker.ld`, `-Lcrates/firmware`), and `build-std = ["core", "alloc"]`
-
-### Store configuration
-
-The firmware deliberately disables i64 and v128 value stacks to reduce memory:
-```rust
-Store::with_config(StackConfig {
-    value_stack_64_init_size: Some(0),
-    value_stack_128_init_size: Some(0),
-    ..
-})
-```
-Smoke tests should only use i32. Do not add i64/v128 tests unless the intent is to re-enable those stacks.
 
 ### WASM bytecode format
 

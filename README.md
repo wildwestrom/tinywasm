@@ -51,12 +51,6 @@ Safety wise, TinyWasm doesn't use any unsafe code and is designed to be complete
 ## Usage
 
 See the [examples](./examples) directory and [documentation](https://docs.rs/tinywasm) for more information on how to use TinyWasm.
-For testing purposes, you can also use the `tinywasm-cli` tool:
-
-```sh
-$ cargo install tinywasm-cli
-$ tinywasm-cli --help
-```
 
 ## Feature Flags
 
