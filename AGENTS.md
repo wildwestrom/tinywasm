@@ -17,6 +17,8 @@ just build-tests       # compile examples/wasm/*.wat → .wasm via wasm-tools
 just test-firmware     # build + run smoke tests via QEMU (passes all .wasm to firmware)
 ```
 
+After making code changes, run the relevant regression tests before concluding work. For firmware/runtime changes, default to `just test-firmware` unless a narrower or broader test target is more appropriate.
+
 ## Architecture
 
 ### Workspace crates

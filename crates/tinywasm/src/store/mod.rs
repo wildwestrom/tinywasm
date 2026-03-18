@@ -453,8 +453,6 @@ impl Store {
     ) -> Result<TinyWasmValue> {
         use tinywasm_types::ConstInstruction::*;
         let val = match const_instr {
-            F32Const(f) => (*f).into(),
-            F64Const(f) => (*f).into(),
             I32Const(i) => (*i).into(),
             I64Const(i) => (*i).into(),
 

@@ -207,18 +207,6 @@ impl ToValType for i64 {
     }
 }
 
-impl ToValType for f32 {
-    fn to_val_type() -> ValType {
-        ValType::F32
-    }
-}
-
-impl ToValType for f64 {
-    fn to_val_type() -> ValType {
-        ValType::F64
-    }
-}
-
 impl ToValType for FuncRef {
     fn to_val_type() -> ValType {
         ValType::RefFunc
@@ -261,15 +249,11 @@ impl<T: ToValType> ValTypesFromTuple for T {
 
 impl_from_wasm_value_tuple_single!(i32);
 impl_from_wasm_value_tuple_single!(i64);
-impl_from_wasm_value_tuple_single!(f32);
-impl_from_wasm_value_tuple_single!(f64);
 impl_from_wasm_value_tuple_single!(FuncRef);
 impl_from_wasm_value_tuple_single!(ExternRef);
 
 impl_into_wasm_value_tuple_single!(i32);
 impl_into_wasm_value_tuple_single!(i64);
-impl_into_wasm_value_tuple_single!(f32);
-impl_into_wasm_value_tuple_single!(f64);
 impl_into_wasm_value_tuple_single!(FuncRef);
 impl_into_wasm_value_tuple_single!(ExternRef);
 

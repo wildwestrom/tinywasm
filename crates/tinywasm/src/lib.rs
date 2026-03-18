@@ -5,8 +5,6 @@
 ))]
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms, unreachable_pub)]
 #![forbid(unsafe_code)]
-#![cfg_attr(feature = "unstable-simd", feature(portable_simd))]
-
 //! A tiny WebAssembly Runtime written in Rust
 //!
 //! `TinyWasm` provides a minimal WebAssembly runtime for executing WebAssembly modules.
@@ -23,7 +21,7 @@
 //!- **`archive`**\
 //!  Enables pre-parsing of archives. This is enabled by default.
 //!
-//! With all these features disabled, `TinyWasm` only depends on `core`, `alloc` and `libm`.
+//! With all these features disabled, `TinyWasm` only depends on `core` and `alloc`.
 //! By disabling `std`, you can use `TinyWasm` in `no_std` environments. This requires
 //! a custom allocator and removes support for parsing from files and streams, but otherwise the API is the same.
 //!
@@ -81,7 +79,6 @@
 //! let config = StackConfig::new()
 //!     .with_value_stack_32_init_size(1024)  // 1KB instead of 32KB
 //!     .with_value_stack_64_init_size(512)   // 512B instead of 16KB
-//!     .with_value_stack_128_init_size(256)  // 256B instead of 8KB
 //!     .with_value_stack_ref_init_size(128)  // 128B instead of 1KB
 
 //!     .with_block_stack_init_size(32);      // 32 instead of 128

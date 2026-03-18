@@ -19,7 +19,6 @@ path="src/lib.rs"
 log={workspace=true, optional=true}
 tinywasm-parser={version="0.9.0-alpha.0", path="../parser", default-features=false, optional=true}
 tinywasm-types={version="0.9.0-alpha.0", path="../types", default-features=false}
-libm={version="0.2", default-features=false}
 
 [dev-dependencies]
 wasm-testsuite.workspace=true
@@ -34,7 +33,7 @@ serde_json.workspace=true
 serde.workspace=true
 
 [features]
-default=["std", "parser", "logging", "archive", "canonicalize_nans"]
+default=["std", "parser", "logging", "archive"]
 
 logging=["log", "tinywasm-parser?/logging", "tinywasm-types/logging"]
 std=["tinywasm-parser?/std", "tinywasm-types/std"]
@@ -44,12 +43,6 @@ parser=["dep:tinywasm-parser"]
 
 # support for "archiving" tinywasm bytecode
 archive=["tinywasm-types/archive"]
-
-# canonicalize all NaN values to a single representation
-canonicalize_nans=[]
-
-# enable simd support (unstable / unfinished)
-unstable-simd=[]
 
 [[test]]
 name="test-wasm-1"

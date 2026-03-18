@@ -12,12 +12,6 @@ pub enum WasmValue {
     I32(i32),
     /// A 64-bit integer.
     I64(i64),
-    /// A 32-bit float.
-    F32(f32),
-    /// A 64-bit float.
-    F64(f64),
-    // /// A 128-bit vector
-    V128(i128),
 
     RefExtern(ExternRef),
     RefFunc(FuncRef),
@@ -110,9 +104,6 @@ impl WasmValue {
         match self {
             Self::I32(i) => ConstInstruction::I32Const(*i),
             Self::I64(i) => ConstInstruction::I64Const(*i),
-            Self::F32(i) => ConstInstruction::F32Const(*i),
-            Self::F64(i) => ConstInstruction::F64Const(*i),
-            Self::V128(_) => unimplemented!("no const_instr for V128"),
             Self::RefFunc(i) => ConstInstruction::RefFunc(i.addr()),
             Self::RefExtern(_) => unimplemented!("no const_instr for RefExtern"),
         }
@@ -124,9 +115,6 @@ impl WasmValue {
         match ty {
             ValType::I32 => Self::I32(0),
             ValType::I64 => Self::I64(0),
-            ValType::F32 => Self::F32(0.0),
-            ValType::F64 => Self::F64(0.0),
-            ValType::V128 => Self::V128(0),
             ValType::RefFunc => Self::RefFunc(FuncRef::null()),
             ValType::RefExtern => Self::RefExtern(ExternRef::null()),
         }
@@ -138,23 +126,8 @@ impl WasmValue {
         match (self, other) {
             (Self::I32(a), Self::I32(b)) => a == b,
             (Self::I64(a), Self::I64(b)) => a == b,
-            (Self::V128(a), Self::V128(b)) => a == b,
             (Self::RefExtern(addr), Self::RefExtern(addr2)) => addr == addr2,
             (Self::RefFunc(addr), Self::RefFunc(addr2)) => addr == addr2,
-            (Self::F32(a), Self::F32(b)) => {
-                if a.is_nan() && b.is_nan() {
-                    true // Both are NaN, treat them as equal
-                } else {
-                    a.to_bits() == b.to_bits()
-                }
-            }
-            (Self::F64(a), Self::F64(b)) => {
-                if a.is_nan() && b.is_nan() {
-                    true // Both are NaN, treat them as equal
-                } else {
-                    a.to_bits() == b.to_bits()
-                }
-            }
             _ => false,
         }
     }
@@ -171,30 +144,6 @@ impl WasmValue {
     pub fn as_i64(&self) -> Option<i64> {
         match self {
             Self::I64(i) => Some(*i),
-            _ => None,
-        }
-    }
-
-    #[doc(hidden)]
-    pub fn as_f32(&self) -> Option<f32> {
-        match self {
-            Self::F32(i) => Some(*i),
-            _ => None,
-        }
-    }
-
-    #[doc(hidden)]
-    pub fn as_f64(&self) -> Option<f64> {
-        match self {
-            Self::F64(i) => Some(*i),
-            _ => None,
-        }
-    }
-
-    #[doc(hidden)]
-    pub fn as_v128(&self) -> Option<i128> {
-        match self {
-            Self::V128(i) => Some(*i),
             _ => None,
         }
     }
@@ -224,9 +173,6 @@ impl Debug for WasmValue {
         match self {
             Self::I32(i) => write!(f, "i32({i})"),
             Self::I64(i) => write!(f, "i64({i})"),
-            Self::F32(i) => write!(f, "f32({i})"),
-            Self::F64(i) => write!(f, "f64({i})"),
-            Self::V128(i) => write!(f, "v128({i:?})"),
             Self::RefExtern(i) => write!(f, "ref({i:?})"),
             Self::RefFunc(i) => write!(f, "func({i:?})"),
         }
@@ -240,9 +186,6 @@ impl WasmValue {
         match self {
             Self::I32(_) => ValType::I32,
             Self::I64(_) => ValType::I64,
-            Self::F32(_) => ValType::F32,
-            Self::F64(_) => ValType::F64,
-            Self::V128(_) => ValType::V128,
             Self::RefExtern(_) => ValType::RefExtern,
             Self::RefFunc(_) => ValType::RefFunc,
         }
@@ -257,12 +200,6 @@ pub enum ValType {
     I32,
     /// A 64-bit integer.
     I64,
-    /// A 32-bit float.
-    F32,
-    /// A 64-bit float.
-    F64,
-    /// A 128-bit vector
-    V128,
     /// A reference to a function.
     RefFunc,
     /// A reference to an external value.
@@ -273,12 +210,6 @@ impl ValType {
     #[inline]
     pub fn default_value(&self) -> WasmValue {
         WasmValue::default_for(*self)
-    }
-
-    #[doc(hidden)]
-    #[inline]
-    pub fn is_simd(&self) -> bool {
-        matches!(self, Self::V128)
     }
 }
 
@@ -311,4 +242,4 @@ macro_rules! impl_conversion_for_wasmvalue {
     }
 }
 
-impl_conversion_for_wasmvalue! { i32 => I32, i64 => I64, f32 => F32, f64 => F64, i128 => V128, ExternRef => RefExtern, FuncRef => RefFunc }
+impl_conversion_for_wasmvalue! { i32 => I32, i64 => I64, ExternRef => RefExtern, FuncRef => RefFunc }

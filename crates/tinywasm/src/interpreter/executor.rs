@@ -1,7 +1,3 @@
-#[cfg(not(feature = "std"))]
-#[allow(unused_imports)]
-use super::no_std_floats::NoStdFloatExt;
-
 use alloc::{format, rc::Rc, string::ToString};
 use core::ops::ControlFlow;
 
@@ -46,17 +42,15 @@ impl<'store, 'stack> Executor<'store, 'stack> {
 
         #[rustfmt::skip]
         match self.cf.fetch_instr() {
-            Nop | BrLabel(_) | I32ReinterpretF32 | I64ReinterpretF64 | F32ReinterpretI32 | F64ReinterpretI64 => {}
+            Nop | BrLabel(_) => {}
             Unreachable => self.exec_unreachable()?,
 
             Drop32 => self.stack.values.drop::<Value32>(),
             Drop64 => self.stack.values.drop::<Value64>(),
-            Drop128 => self.stack.values.drop::<Value128>(),
             DropRef => self.stack.values.drop::<ValueRef>(),
 
             Select32 => self.stack.values.select::<Value32>(),
             Select64 => self.stack.values.select::<Value64>(),
-            Select128 => self.stack.values.select::<Value128>(),
             SelectRef => self.stack.values.select::<ValueRef>(),
 
             Call(v) => return self.exec_call_direct::<false>(*v),
@@ -83,29 +77,23 @@ impl<'store, 'stack> Executor<'store, 'stack> {
 
             LocalGet32(local_index) => self.exec_local_get::<Value32>(*local_index),
             LocalGet64(local_index) => self.exec_local_get::<Value64>(*local_index),
-            LocalGet128(local_index) => self.exec_local_get::<Value128>(*local_index),
             LocalGetRef(local_index) => self.exec_local_get::<ValueRef>(*local_index),
 
             LocalSet32(local_index) => self.exec_local_set::<Value32>(*local_index),
             LocalSet64(local_index) => self.exec_local_set::<Value64>(*local_index),
-            LocalSet128(local_index) => self.exec_local_set::<Value128>(*local_index),
             LocalSetRef(local_index) => self.exec_local_set::<ValueRef>(*local_index),
 
             LocalTee32(local_index) => self.exec_local_tee::<Value32>(*local_index),
             LocalTee64(local_index) => self.exec_local_tee::<Value64>(*local_index),
-            LocalTee128(local_index) => self.exec_local_tee::<Value128>(*local_index),
             LocalTeeRef(local_index) => self.exec_local_tee::<ValueRef>(*local_index),
 
             GlobalGet(global_index) => self.exec_global_get(*global_index),
             GlobalSet32(global_index) => self.exec_global_set::<Value32>(*global_index),
             GlobalSet64(global_index) => self.exec_global_set::<Value64>(*global_index),
-            GlobalSet128(global_index) => self.exec_global_set::<Value128>(*global_index),
             GlobalSetRef(global_index) => self.exec_global_set::<ValueRef>(*global_index),
 
             I32Const(val) => self.exec_const(*val),
             I64Const(val) => self.exec_const(*val),
-            F32Const(val) => self.exec_const(*val),
-            F64Const(val) => self.exec_const(*val),
             RefFunc(func_idx) => self.exec_const::<ValueRef>(Some(*func_idx)),
             RefNull(_) => self.exec_const::<ValueRef>(None),
             RefIsNull => self.exec_ref_is_null(),
@@ -123,8 +111,6 @@ impl<'store, 'stack> Executor<'store, 'stack> {
 
             I32Store(m) => self.exec_mem_store::<i32, i32, 4>(m.mem_addr(), m.offset(), |v| v)?,
             I64Store(m) => self.exec_mem_store::<i64, i64, 8>(m.mem_addr(), m.offset(), |v| v)?,
-            F32Store(m) => self.exec_mem_store::<f32, f32, 4>(m.mem_addr(), m.offset(), |v| v)?,
-            F64Store(m) => self.exec_mem_store::<f64, f64, 8>(m.mem_addr(), m.offset(), |v| v)?,
             I32Store8(m) => self.exec_mem_store::<i32, i8, 1>(m.mem_addr(), m.offset(), |v| v as i8)?,
             I32Store16(m) => self.exec_mem_store::<i32, i16, 2>(m.mem_addr(), m.offset(), |v| v as i16)?,
             I64Store8(m) => self.exec_mem_store::<i64, i8, 1>(m.mem_addr(), m.offset(), |v| v as i8)?,
@@ -133,8 +119,6 @@ impl<'store, 'stack> Executor<'store, 'stack> {
 
             I32Load(m) => self.exec_mem_load::<i32, 4, _>(m.mem_addr(), m.offset(), |v| v)?,
             I64Load(m) => self.exec_mem_load::<i64, 8, _>(m.mem_addr(), m.offset(), |v| v)?,
-            F32Load(m) => self.exec_mem_load::<f32, 4, _>(m.mem_addr(), m.offset(), |v| v)?,
-            F64Load(m) => self.exec_mem_load::<f64, 8, _>(m.mem_addr(), m.offset(), |v| v)?,
             I32Load8S(m) => self.exec_mem_load::<i8, 1, _>(m.mem_addr(), m.offset(), i32::from)?,
             I32Load8U(m) => self.exec_mem_load::<u8, 1, _>(m.mem_addr(), m.offset(), i32::from)?,
             I32Load16S(m) => self.exec_mem_load::<i16, 2, _>(m.mem_addr(), m.offset(), i32::from)?,
@@ -150,59 +134,38 @@ impl<'store, 'stack> Executor<'store, 'stack> {
             I32Eqz => self.stack.values.replace_top_same::<i32>(|v| Ok(i32::from(v == 0))).to_cf()?,
             I32Eq => self.stack.values.calculate_same::<i32>(|a, b| Ok(i32::from(a == b))).to_cf()?,
             I64Eq => self.stack.values.calculate::<i64, _>(|a, b| Ok(i32::from(a == b))).to_cf()?,
-            F32Eq => self.stack.values.calculate::<f32, _>(|a, b| Ok(i32::from(a == b))).to_cf()?,
-            F64Eq => self.stack.values.calculate::<f64, _>(|a, b| Ok(i32::from(a == b))).to_cf()?,
 
             I32Ne => self.stack.values.calculate_same::<i32>(|a, b| Ok(i32::from(a != b))).to_cf()?,
             I64Ne => self.stack.values.calculate::<i64, _>(|a, b| Ok(i32::from(a != b))).to_cf()?,
-            F32Ne => self.stack.values.calculate::<f32, _>(|a, b| Ok(i32::from(a != b))).to_cf()?,
-            F64Ne => self.stack.values.calculate::<f64, _>(|a, b| Ok(i32::from(a != b))).to_cf()?,
 
             I32LtS => self.stack.values.calculate_same::<i32>(|a, b| Ok(i32::from(a < b))).to_cf()?,
             I64LtS => self.stack.values.calculate::<i64, _>(|a, b| Ok(i32::from(a < b))).to_cf()?,
             I32LtU => self.stack.values.calculate::<u32, _>(|a, b| Ok(i32::from(a < b))).to_cf()?,
             I64LtU => self.stack.values.calculate::<u64, _>(|a, b| Ok(i32::from(a < b))).to_cf()?,
-            F32Lt => self.stack.values.calculate::<f32, _>(|a, b| Ok(i32::from(a < b))).to_cf()?,
-            F64Lt => self.stack.values.calculate::<f64, _>(|a, b| Ok(i32::from(a < b))).to_cf()?,
 
             I32LeS => self.stack.values.calculate_same::<i32>(|a, b| Ok(i32::from(a <= b))).to_cf()?,
             I64LeS => self.stack.values.calculate::<i64, _>(|a, b| Ok(i32::from(a <= b))).to_cf()?,
             I32LeU => self.stack.values.calculate::<u32, _>(|a, b| Ok(i32::from(a <= b))).to_cf()?,
             I64LeU => self.stack.values.calculate::<u64, _>(|a, b| Ok(i32::from(a <= b))).to_cf()?,
-            F32Le => self.stack.values.calculate::<f32, _>(|a, b| Ok(i32::from(a <= b))).to_cf()?,
-            F64Le => self.stack.values.calculate::<f64, _>(|a, b| Ok(i32::from(a <= b))).to_cf()?,
 
             I32GeS => self.stack.values.calculate_same::<i32>(|a, b| Ok(i32::from(a >= b))).to_cf()?,
             I64GeS => self.stack.values.calculate::<i64, _>(|a, b| Ok(i32::from(a >= b))).to_cf()?,
             I32GeU => self.stack.values.calculate::<u32, _>(|a, b| Ok(i32::from(a >= b))).to_cf()?,
             I64GeU => self.stack.values.calculate::<u64, _>(|a, b| Ok(i32::from(a >= b))).to_cf()?,
-            F32Ge => self.stack.values.calculate::<f32, _>(|a, b| Ok(i32::from(a >= b))).to_cf()?,
-            F64Ge => self.stack.values.calculate::<f64, _>(|a, b| Ok(i32::from(a >= b))).to_cf()?,
 
             I32GtS => self.stack.values.calculate_same::<i32>(|a, b| Ok(i32::from(a > b))).to_cf()?,
             I64GtS => self.stack.values.calculate::<i64, _>(|a, b| Ok(i32::from(a > b))).to_cf()?,
             I32GtU => self.stack.values.calculate::<u32, _>(|a, b| Ok(i32::from(a > b))).to_cf()?,
             I64GtU => self.stack.values.calculate::<u64, _>(|a, b| Ok(i32::from(a > b))).to_cf()?,
-            F32Gt => self.stack.values.calculate::<f32, _>(|a, b| Ok(i32::from(a > b))).to_cf()?,
-            F64Gt => self.stack.values.calculate::<f64, _>(|a, b| Ok(i32::from(a > b))).to_cf()?,
 
             I32Add => self.stack.values.calculate_same::<i32>(|a, b| Ok(a.wrapping_add(b))).to_cf()?,
             I64Add => self.stack.values.calculate_same::<i64>(|a, b| Ok(a.wrapping_add(b))).to_cf()?,
-            F32Add => self.stack.values.calculate_same::<f32>(|a, b| Ok(a + b)).to_cf()?,
-            F64Add => self.stack.values.calculate_same::<f64>(|a, b| Ok(a + b)).to_cf()?,
 
             I32Sub => self.stack.values.calculate_same::<i32>(|a, b| Ok(a.wrapping_sub(b))).to_cf()?,
             I64Sub => self.stack.values.calculate_same::<i64>(|a, b| Ok(a.wrapping_sub(b))).to_cf()?,
-            F32Sub => self.stack.values.calculate_same::<f32>(|a, b| Ok(a - b)).to_cf()?,
-            F64Sub => self.stack.values.calculate_same::<f64>(|a, b| Ok(a - b)).to_cf()?,
-
-            F32Div => self.stack.values.calculate_same::<f32>(|a, b| Ok(a / b)).to_cf()?,
-            F64Div => self.stack.values.calculate_same::<f64>(|a, b| Ok(a / b)).to_cf()?,
 
             I32Mul => self.stack.values.calculate_same::<i32>(|a, b| Ok(a.wrapping_mul(b))).to_cf()?,
             I64Mul => self.stack.values.calculate_same::<i64>(|a, b| Ok(a.wrapping_mul(b))).to_cf()?,
-            F32Mul => self.stack.values.calculate_same::<f32>(|a, b| Ok(a * b)).to_cf()?,
-            F64Mul => self.stack.values.calculate_same::<f64>(|a, b| Ok(a * b)).to_cf()?,
 
             I32DivS => self.stack.values.calculate_same::<i32>(|a, b| a.wasm_checked_div(b)).to_cf()?,
             I64DivS => self.stack.values.calculate_same::<i64>(|a, b| a.wasm_checked_div(b)).to_cf()?,
@@ -237,15 +200,6 @@ impl<'store, 'stack> Executor<'store, 'stack> {
             I32Popcnt => self.stack.values.replace_top_same::<i32>(|v| Ok(v.count_ones() as i32)).to_cf()?,
             I64Popcnt => self.stack.values.replace_top_same::<i64>(|v| Ok(i64::from(v.count_ones()))).to_cf()?,
 
-            F32ConvertI32S => self.stack.values.replace_top::<i32, _>(|v| Ok(v as f32)).to_cf()?,
-            F32ConvertI64S => self.stack.values.replace_top::<i64, _>(|v| Ok(v as f32)).to_cf()?,
-            F64ConvertI32S => self.stack.values.replace_top::<i32, _>(|v| Ok(f64::from(v))).to_cf()?,
-            F64ConvertI64S => self.stack.values.replace_top::<i64, _>(|v| Ok(v as f64)).to_cf()?,
-            F32ConvertI32U => self.stack.values.replace_top::<u32, _>(|v| Ok(v as f32)).to_cf()?,
-            F32ConvertI64U => self.stack.values.replace_top::<u64, _>(|v| Ok(v as f32)).to_cf()?,
-            F64ConvertI32U => self.stack.values.replace_top::<u32, _>(|v| Ok(f64::from(v))).to_cf()?,
-            F64ConvertI64U => self.stack.values.replace_top::<u64, _>(|v| Ok(v as f64)).to_cf()?,
-
             I32Extend8S => self.stack.values.replace_top_same::<i32>(|v| Ok(i32::from(v as i8))).to_cf()?,
             I32Extend16S => self.stack.values.replace_top_same::<i32>(|v| Ok(i32::from(v as i16))).to_cf()?,
             I64Extend8S => self.stack.values.replace_top_same::<i64>(|v| Ok(i64::from(v as i8))).to_cf()?,
@@ -255,39 +209,6 @@ impl<'store, 'stack> Executor<'store, 'stack> {
             I64ExtendI32S => self.stack.values.replace_top::<i32, _>(|v| Ok(i64::from(v))).to_cf()?,
             I32WrapI64 => self.stack.values.replace_top::<i64, _>(|v| Ok(v as i32)).to_cf()?,
 
-            F32DemoteF64 => self.stack.values.replace_top::<f64, _>(|v| Ok(v as f32)).to_cf()?,
-            F64PromoteF32 => self.stack.values.replace_top::<f32, _>(|v| Ok(f64::from(v))).to_cf()?,
-
-            F32Abs => self.stack.values.replace_top_same::<f32>(|v| Ok(v.abs())).to_cf()?,
-            F64Abs => self.stack.values.replace_top_same::<f64>(|v| Ok(v.abs())).to_cf()?,
-            F32Neg => self.stack.values.replace_top_same::<f32>(|v| Ok(-v)).to_cf()?,
-            F64Neg => self.stack.values.replace_top_same::<f64>(|v| Ok(-v)).to_cf()?,
-            F32Ceil => self.stack.values.replace_top_same::<f32>(|v| Ok(v.ceil())).to_cf()?,
-            F64Ceil => self.stack.values.replace_top_same::<f64>(|v| Ok(v.ceil())).to_cf()?,
-            F32Floor => self.stack.values.replace_top_same::<f32>(|v| Ok(v.floor())).to_cf()?,
-            F64Floor => self.stack.values.replace_top_same::<f64>(|v| Ok(v.floor())).to_cf()?,
-            F32Trunc => self.stack.values.replace_top_same::<f32>(|v| Ok(v.trunc())).to_cf()?,
-            F64Trunc => self.stack.values.replace_top_same::<f64>(|v| Ok(v.trunc())).to_cf()?,
-            F32Nearest => self.stack.values.replace_top_same::<f32>(|v| Ok(v.tw_nearest())).to_cf()?,
-            F64Nearest => self.stack.values.replace_top_same::<f64>(|v| Ok(v.tw_nearest())).to_cf()?,
-            F32Sqrt => self.stack.values.replace_top_same::<f32>(|v| Ok(v.sqrt())).to_cf()?,
-            F64Sqrt => self.stack.values.replace_top_same::<f64>(|v| Ok(v.sqrt())).to_cf()?,
-            F32Min => self.stack.values.calculate_same::<f32>(|a, b| Ok(a.tw_minimum(b))).to_cf()?,
-            F64Min => self.stack.values.calculate_same::<f64>(|a, b| Ok(a.tw_minimum(b))).to_cf()?,
-            F32Max => self.stack.values.calculate_same::<f32>(|a, b| Ok(a.tw_maximum(b))).to_cf()?,
-            F64Max => self.stack.values.calculate_same::<f64>(|a, b| Ok(a.tw_maximum(b))).to_cf()?,
-            F32Copysign => self.stack.values.calculate_same::<f32>(|a, b| Ok(a.copysign(b))).to_cf()?,
-            F64Copysign => self.stack.values.calculate_same::<f64>(|a, b| Ok(a.copysign(b))).to_cf()?,
-
-            I32TruncF32S => checked_conv_float!(f32, i32, self),
-            I32TruncF64S => checked_conv_float!(f64, i32, self),
-            I32TruncF32U => checked_conv_float!(f32, u32, i32, self),
-            I32TruncF64U => checked_conv_float!(f64, u32, i32, self),
-            I64TruncF32S => checked_conv_float!(f32, i64, self),
-            I64TruncF64S => checked_conv_float!(f64, i64, self),
-            I64TruncF32U => checked_conv_float!(f32, u64, i64, self),
-            I64TruncF64U => checked_conv_float!(f64, u64, i64, self),
-
             TableGet(table_idx) => self.exec_table_get(*table_idx).to_cf()?,
             TableSet(table_idx) => self.exec_table_set(*table_idx).to_cf()?,
             TableSize(table_idx) => self.exec_table_size(*table_idx).to_cf()?,
@@ -295,18 +216,8 @@ impl<'store, 'stack> Executor<'store, 'stack> {
             TableGrow(table_idx) => self.exec_table_grow(*table_idx).to_cf()?,
             TableFill(table_idx) => self.exec_table_fill(*table_idx).to_cf()?,
 
-            I32TruncSatF32S => self.stack.values.replace_top::<f32, _>(|v| Ok(v.trunc() as i32)).to_cf()?,
-            I32TruncSatF32U => self.stack.values.replace_top::<f32, _>(|v| Ok(v.trunc() as u32)).to_cf()?,
-            I32TruncSatF64S => self.stack.values.replace_top::<f64, _>(|v| Ok(v.trunc() as i32)).to_cf()?,
-            I32TruncSatF64U => self.stack.values.replace_top::<f64, _>(|v| Ok(v.trunc() as u32)).to_cf()?,
-            I64TruncSatF32S => self.stack.values.replace_top::<f32, _>(|v| Ok(v.trunc() as i64)).to_cf()?,
-            I64TruncSatF32U => self.stack.values.replace_top::<f32, _>(|v| Ok(v.trunc() as u64)).to_cf()?,
-            I64TruncSatF64S => self.stack.values.replace_top::<f64, _>(|v| Ok(v.trunc() as i64)).to_cf()?,
-            I64TruncSatF64U => self.stack.values.replace_top::<f64, _>(|v| Ok(v.trunc() as u64)).to_cf()?,
-
             LocalCopy32(from, to) => self.exec_local_copy::<Value32>(*from, *to),
             LocalCopy64(from, to) => self.exec_local_copy::<Value64>(*from, *to),
-            LocalCopy128(from, to) => self.exec_local_copy::<Value128>(*from, *to),
             LocalCopyRef(from, to) => self.exec_local_copy::<ValueRef>(*from, *to),
 
             #[allow(unreachable_patterns)]
@@ -633,34 +544,6 @@ impl<'store, 'stack> Executor<'store, 'stack> {
         }
     }
 
-    #[cfg(feature = "unstable-simd")]
-    fn exec_mem_load_lane<
-        LOAD: MemLoadable<LOAD_SIZE>,
-        INTO: InternalValue + IndexMut<usize, Output = LOAD>,
-        const LOAD_SIZE: usize,
-    >(
-        &mut self,
-        mem_addr: tinywasm_types::MemAddr,
-        offset: u64,
-        lane: u8,
-    ) -> ControlFlow<Option<Error>> {
-        let mem = self.store.get_mem(self.module.resolve_mem_addr(mem_addr));
-        let mut imm = self.stack.values.pop::<INTO>();
-        let val = self.stack.values.pop::<i32>() as u64;
-        let Some(Ok(addr)) = offset.checked_add(val).map(TryInto::try_into) else {
-            cold();
-            return ControlFlow::Break(Some(Error::Trap(Trap::MemoryOutOfBounds {
-                offset: val as usize,
-                len: LOAD_SIZE,
-                max: 0,
-            })));
-        };
-        let val = mem.load_as::<LOAD_SIZE, LOAD>(addr).to_cf()?;
-        imm[lane as usize] = val;
-        self.stack.values.push(imm);
-        ControlFlow::Continue(())
-    }
-
     fn exec_mem_load<LOAD: MemLoadable<LOAD_SIZE>, const LOAD_SIZE: usize, TARGET: InternalValue>(
         &mut self,
         mem_addr: tinywasm_types::MemAddr,
@@ -684,29 +567,6 @@ impl<'store, 'stack> Executor<'store, 'stack> {
         };
         let val = mem.load_as::<LOAD_SIZE, LOAD>(addr).to_cf()?;
         self.stack.values.push(cast(val));
-        ControlFlow::Continue(())
-    }
-
-    #[cfg(feature = "unstable-simd")]
-    fn exec_mem_store_lane<T: InternalValue + Index<usize, Output = U>, U: MemStorable<N> + Copy, const N: usize>(
-        &mut self,
-        mem_addr: tinywasm_types::MemAddr,
-        offset: u64,
-        lane: u8,
-    ) -> ControlFlow<Option<Error>> {
-        let mem = self.store.get_mem_mut(self.module.resolve_mem_addr(mem_addr));
-        let val = self.stack.values.pop::<T>();
-        let val = val[lane as usize].to_mem_bytes();
-
-        let addr = match mem.is_64bit() {
-            true => self.stack.values.pop::<i64>() as u64,
-            false => self.stack.values.pop::<i32>() as u32 as u64,
-        };
-
-        if let Err(e) = mem.store((offset + addr) as usize, val.len(), &val) {
-            return ControlFlow::Break(Some(e));
-        }
-
         ControlFlow::Continue(())
     }
 

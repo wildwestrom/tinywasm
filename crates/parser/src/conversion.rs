@@ -183,17 +183,19 @@ pub(crate) fn convert_module_code(
 
     for i in 0..validator.len_locals() {
         match validator.get_local_type(i) {
-            Some(wasmparser::ValType::I32 | wasmparser::ValType::F32) => {
+            Some(wasmparser::ValType::I32) => {
                 local_addr_map.push(local_counts.c32);
                 local_counts.c32 += 1;
             }
-            Some(wasmparser::ValType::I64 | wasmparser::ValType::F64) => {
+            Some(wasmparser::ValType::I64) => {
                 local_addr_map.push(local_counts.c64);
                 local_counts.c64 += 1;
             }
+            Some(wasmparser::ValType::F32 | wasmparser::ValType::F64) => {
+                return Err(crate::ParseError::UnsupportedOperator("floating-point locals are not supported".to_string()));
+            }
             Some(wasmparser::ValType::V128) => {
-                local_addr_map.push(local_counts.c128);
-                local_counts.c128 += 1;
+                return Err(crate::ParseError::UnsupportedOperator("SIMD locals are not supported".to_string()));
             }
             Some(wasmparser::ValType::Ref(_)) => {
                 local_addr_map.push(local_counts.cref);
@@ -235,9 +237,10 @@ pub(crate) fn convert_valtype(valtype: &wasmparser::ValType) -> ValType {
     match valtype {
         wasmparser::ValType::I32 => ValType::I32,
         wasmparser::ValType::I64 => ValType::I64,
-        wasmparser::ValType::F32 => ValType::F32,
-        wasmparser::ValType::F64 => ValType::F64,
-        wasmparser::ValType::V128 => ValType::V128,
+        wasmparser::ValType::F32 | wasmparser::ValType::F64 => {
+            unimplemented!("floating-point value types are not supported")
+        }
+        wasmparser::ValType::V128 => unimplemented!("SIMD value types are not supported"),
         wasmparser::ValType::Ref(r) => convert_reftype(*r),
     }
 }
@@ -259,9 +262,6 @@ pub(crate) fn process_const_operators(ops: OperatorsReader<'_>) -> Result<ConstI
         wasmparser::Operator::RefFunc { function_index } => Ok(ConstInstruction::RefFunc(Some(*function_index))),
         wasmparser::Operator::I32Const { value } => Ok(ConstInstruction::I32Const(*value)),
         wasmparser::Operator::I64Const { value } => Ok(ConstInstruction::I64Const(*value)),
-        wasmparser::Operator::F32Const { value } => Ok(ConstInstruction::F32Const(f32::from_bits(value.bits()))),
-        wasmparser::Operator::F64Const { value } => Ok(ConstInstruction::F64Const(f64::from_bits(value.bits()))),
-
         wasmparser::Operator::GlobalGet { global_index } => Ok(ConstInstruction::GlobalGet(*global_index)),
         op => Err(crate::ParseError::UnsupportedOperator(format!("Unsupported const instruction: {op:?}"))),
     }

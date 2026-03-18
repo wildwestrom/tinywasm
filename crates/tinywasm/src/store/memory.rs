@@ -2,10 +2,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use tinywasm_types::{MemoryArch, MemoryType, ModuleInstanceAddr};
 
-use crate::{Error, Result, cold, interpreter::Value128, log};
-
-#[cfg(feature = "unstable-simd")]
-use core::simd::ToBytes;
+use crate::{Error, Result, cold, log};
 
 /// A WebAssembly Memory Instance
 ///
@@ -187,29 +184,7 @@ macro_rules! impl_mem_traits {
     }
 }
 
-impl_mem_traits!(u8, 1, i8, 1, u16, 2, i16, 2, u32, 4, i32, 4, f32, 4, u64, 8, i64, 8, f64, 8, Value128, 16);
-
-#[cfg(feature = "unstable-simd")]
-impl_mem_traits!(
-    core::simd::i8x16,
-    16,
-    core::simd::i16x8,
-    16,
-    core::simd::i32x4,
-    16,
-    core::simd::i64x2,
-    16,
-    core::simd::u16x8,
-    16,
-    core::simd::u32x4,
-    16,
-    core::simd::u64x2,
-    16,
-    core::simd::f32x4,
-    16,
-    core::simd::f64x2,
-    16
-);
+impl_mem_traits!(u8, 1, i8, 1, u16, 2, i16, 2, u32, 4, i32, 4, u64, 8, i64, 8);
 
 #[cfg(test)]
 mod memory_instance_tests {

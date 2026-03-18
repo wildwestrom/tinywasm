@@ -203,7 +203,6 @@ pub struct FuncType {
 pub struct ValueCounts {
     pub c32: u32,
     pub c64: u32,
-    pub c128: u32,
     pub cref: u32,
 }
 
@@ -212,7 +211,6 @@ pub struct ValueCounts {
 pub struct ValueCountsSmall {
     pub c32: u16,
     pub c64: u16,
-    pub c128: u16,
     pub cref: u16,
 }
 
@@ -221,9 +219,8 @@ impl<'a, T: IntoIterator<Item = &'a ValType>> From<T> for ValueCounts {
         let mut counts = Self::default();
         for ty in types {
             match ty {
-                ValType::I32 | ValType::F32 => counts.c32 += 1,
-                ValType::I64 | ValType::F64 => counts.c64 += 1,
-                ValType::V128 => counts.c128 += 1,
+                ValType::I32 => counts.c32 += 1,
+                ValType::I64 => counts.c64 += 1,
                 ValType::RefExtern | ValType::RefFunc => counts.cref += 1,
             }
         }
@@ -236,9 +233,8 @@ impl<'a, T: IntoIterator<Item = &'a ValType>> From<T> for ValueCountsSmall {
         let mut counts = Self::default();
         for ty in types {
             match ty {
-                ValType::I32 | ValType::F32 => counts.c32 += 1,
-                ValType::I64 | ValType::F64 => counts.c64 += 1,
-                ValType::V128 => counts.c128 += 1,
+                ValType::I32 => counts.c32 += 1,
+                ValType::I64 => counts.c64 += 1,
                 ValType::RefExtern | ValType::RefFunc => counts.cref += 1,
             }
         }

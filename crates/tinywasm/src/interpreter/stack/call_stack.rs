@@ -50,7 +50,6 @@ pub(crate) struct CallFrame {
 pub(crate) struct Locals {
     pub(crate) locals_32: Box<[Value32]>,
     pub(crate) locals_64: Box<[Value64]>,
-    pub(crate) locals_128: Box<[Value128]>,
     pub(crate) locals_ref: Box<[ValueRef]>,
 }
 
@@ -175,8 +174,6 @@ impl CallFrame {
             locals_32.reserve_exact(wasm_func_inst.locals.c32 as usize);
             let mut locals_64 = Vec::new();
             locals_64.reserve_exact(wasm_func_inst.locals.c64 as usize);
-            let mut locals_128 = Vec::new();
-            locals_128.reserve_exact(wasm_func_inst.locals.c128 as usize);
             let mut locals_ref = Vec::new();
             locals_ref.reserve_exact(wasm_func_inst.locals.cref as usize);
 
@@ -184,20 +181,17 @@ impl CallFrame {
                 match p.into() {
                     TinyWasmValue::Value32(v) => locals_32.push(v),
                     TinyWasmValue::Value64(v) => locals_64.push(v),
-                    TinyWasmValue::Value128(v) => locals_128.push(v),
                     TinyWasmValue::ValueRef(v) => locals_ref.push(v),
                 }
             }
 
             locals_32.resize_with(wasm_func_inst.locals.c32 as usize, Default::default);
             locals_64.resize_with(wasm_func_inst.locals.c64 as usize, Default::default);
-            locals_128.resize_with(wasm_func_inst.locals.c128 as usize, Default::default);
             locals_ref.resize_with(wasm_func_inst.locals.cref as usize, Default::default);
 
             Locals {
                 locals_32: locals_32.into_boxed_slice(),
                 locals_64: locals_64.into_boxed_slice(),
-                locals_128: locals_128.into_boxed_slice(),
                 locals_ref: locals_ref.into_boxed_slice(),
             }
         };

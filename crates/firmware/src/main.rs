@@ -88,7 +88,6 @@ fn run_module(wasm: &[u8]) -> tinywasm::Result<()> {
     let mut store = tinywasm::Store::with_config(tinywasm::StackConfig {
         value_stack_32_init_size: None,
         value_stack_64_init_size: Some(0),
-        value_stack_128_init_size: Some(0),
         value_stack_ref_init_size: None,
         block_stack_init_size: None,
     });

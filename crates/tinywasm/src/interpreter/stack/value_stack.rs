@@ -9,7 +9,6 @@ use super::Locals;
 pub(crate) struct ValueStack {
     pub(crate) stack_32: Vec<Value32>,
     pub(crate) stack_64: Vec<Value64>,
-    pub(crate) stack_128: Vec<Value128>,
     pub(crate) stack_ref: Vec<ValueRef>,
 }
 
@@ -18,7 +17,6 @@ impl ValueStack {
         Self {
             stack_32: Vec::with_capacity(config.value_stack_32_init_size()),
             stack_64: Vec::with_capacity(config.value_stack_64_init_size()),
-            stack_128: Vec::with_capacity(config.value_stack_128_init_size()),
             stack_ref: Vec::with_capacity(config.value_stack_ref_init_size()),
         }
     }
@@ -27,7 +25,6 @@ impl ValueStack {
         StackLocation {
             s32: self.stack_32.len() as u32,
             s64: self.stack_64.len() as u32,
-            s128: self.stack_128.len() as u32,
             sref: self.stack_ref.len() as u32,
         }
     }
@@ -138,13 +135,6 @@ impl ValueStack {
                 self.stack_64.truncate(self.stack_64.len() - pc.c64 as usize);
                 locals_64
             },
-            locals_128: {
-                let mut locals_128 = { alloc::vec![Value128::default(); lc.c128 as usize].into_boxed_slice() };
-                locals_128[0..pc.c128 as usize]
-                    .copy_from_slice(&self.stack_128[(self.stack_128.len() - pc.c128 as usize)..]);
-                self.stack_128.truncate(self.stack_128.len() - pc.c128 as usize);
-                locals_128
-            },
             locals_ref: {
                 let mut locals_ref = { alloc::vec![ValueRef::default(); lc.cref as usize].into_boxed_slice() };
                 locals_ref[0..pc.cref as usize]
@@ -167,7 +157,6 @@ impl ValueStack {
 
         truncate_keep(&mut self.stack_32, to.s32, u32::from(keep.s32));
         truncate_keep(&mut self.stack_64, to.s64, u32::from(keep.s64));
-        truncate_keep(&mut self.stack_128, to.s128, u32::from(keep.s128));
         truncate_keep(&mut self.stack_ref, to.sref, u32::from(keep.sref));
     }
 
@@ -175,7 +164,6 @@ impl ValueStack {
         match value {
             TinyWasmValue::Value32(v) => self.stack_32.push(v),
             TinyWasmValue::Value64(v) => self.stack_64.push(v),
-            TinyWasmValue::Value128(v) => self.stack_128.push(v),
             TinyWasmValue::ValueRef(v) => self.stack_ref.push(v),
         }
     }
@@ -184,16 +172,8 @@ impl ValueStack {
         match val_type {
             ValType::I32 => WasmValue::I32(self.pop()),
             ValType::I64 => WasmValue::I64(self.pop()),
-            ValType::F32 => WasmValue::F32(self.pop()),
-            ValType::F64 => WasmValue::F64(self.pop()),
             ValType::RefExtern => WasmValue::RefExtern(ExternRef::new(self.pop())),
             ValType::RefFunc => WasmValue::RefFunc(FuncRef::new(self.pop())),
-
-            #[cfg(not(feature = "unstable-simd"))]
-            ValType::V128 => WasmValue::V128(self.pop()),
-
-            #[cfg(feature = "unstable-simd")]
-            ValType::V128 => WasmValue::V128(i128::from_le_bytes(self.pop::<Value128>().to_array())),
         }
     }
 

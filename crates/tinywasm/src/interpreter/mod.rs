@@ -3,9 +3,6 @@ pub(crate) mod num_helpers;
 pub(crate) mod stack;
 mod values;
 
-#[cfg(not(feature = "std"))]
-mod no_std_floats;
-
 use crate::{Result, Store};
 pub use values::*;
 
