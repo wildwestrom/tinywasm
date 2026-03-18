@@ -112,7 +112,7 @@ impl WasmValue {
             Self::I64(i) => ConstInstruction::I64Const(*i),
             Self::F32(i) => ConstInstruction::F32Const(*i),
             Self::F64(i) => ConstInstruction::F64Const(*i),
-            Self::V128(i) => ConstInstruction::V128Const(*i),
+            Self::V128(_) => unimplemented!("no const_instr for V128"),
             Self::RefFunc(i) => ConstInstruction::RefFunc(i.addr()),
             Self::RefExtern(_) => unimplemented!("no const_instr for RefExtern"),
         }

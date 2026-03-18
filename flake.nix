@@ -35,6 +35,7 @@
             just
             qemu
             wasm-tools
+            cargo-bloat
           ];
         };
       }

@@ -64,3 +64,11 @@ inherits="release"
 [profile.samply]
 inherits="release"
 debug=true
+
+[profile.firmware]
+inherits="release"
+opt-level="z"
+lto="fat"
+codegen-units=1
+strip=true
+panic="abort"

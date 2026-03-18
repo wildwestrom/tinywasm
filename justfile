@@ -1,11 +1,11 @@
-FIRMWARE := "target/riscv64im-unknown-none-elf/debug/tinywasm-firmware"
+FIRMWARE := "target/riscv64im-unknown-none-elf/firmware/tinywasm-firmware"
 
 default:
     @just --list
 
 # Build the RISC-V firmware
 build-firmware:
-    cd crates/firmware && cargo build
+    cd crates/firmware && cargo build --profile firmware
 
 # Run firmware interactively in QEMU (Ctrl-A X to exit)
 run-firmware: build-firmware

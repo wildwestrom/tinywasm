@@ -258,9 +258,7 @@ pub struct WasmFunction {
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "archive", derive(serde::Serialize, serde::Deserialize))]
-pub struct WasmFunctionData {
-    pub v128_constants: Box<[i128]>,
-}
+pub struct WasmFunctionData {}
 
 /// A WebAssembly Module Export
 #[derive(Debug, Clone, PartialEq, Eq)]
