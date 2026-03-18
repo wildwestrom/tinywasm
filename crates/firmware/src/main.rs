@@ -113,5 +113,7 @@ fn run_module(wasm: &[u8]) -> tinywasm::Result<()> {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     println!("PANIC: {}", info);
+    // SiFive Test device: write 0x3333 to 0x100000 to exit QEMU with failure
+    unsafe { core::ptr::write_volatile(0x100000 as *mut u32, 0x3333) };
     loop {}
 }
